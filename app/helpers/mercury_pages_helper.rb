@@ -11,9 +11,9 @@ module MercuryPagesHelper
     else
       e = nil
       name = args[0] || "#{controller_name}-#{action_name}"
-      name = name + "-#{options[:part]}" unless options[:part].blank?
+      name = "#{name}-#{options[:part]}" unless options[:part].blank?
     end
-    name = name + '-editable'
+    name = "#{name}-editable"
     options[:id] ||= name
     options[:'data-mercury'] ||= 'full'
 
