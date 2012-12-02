@@ -12,11 +12,14 @@ class MercuryPagesController < ApplicationController
         else
           content = params[:content][name][:value]
         end
-        if ar_class && ar_field && ar_id
+        if ar_class && ar_id
           @element = ar_class.constantize.find(ar_id)
+        else
+          @element = PageElement.where(:name => name).first || PageElement.new(:name => name)          
+        end
+        if ar_field
           @element.send("#{ar_field}=", content)
         else
-          @element = PageElement.where(:name => name).first || PageElement.new(:name => name)
           @element.content = content
         end
         @element.save
