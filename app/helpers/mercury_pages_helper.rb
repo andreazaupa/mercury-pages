@@ -3,6 +3,7 @@ module MercuryPagesHelper
     with_editable_object(*args) do |name, field, e, options|
       options[:id] ||= name
       options[:'data-mercury'] ||= 'full'
+      options[:class] = options[:class].to_s + ' editable_element'
 
       unless e
         e = PageElement.find_by_name(name) # Find a Page Element unless bound to an AR model object
