@@ -20,6 +20,12 @@ module MercuryPages
       default_scope order('page_elements.priority, page_elements.id')
 
       has_foreign_language :title, :description, :content
+
+      if defined? RailsAdmin
+        rails_admin do
+          configure :list_name, :hidden
+        end
+      end
     end
  
     module ClassMethods
@@ -36,6 +42,10 @@ module MercuryPages
 
     def aasm_state_enum
       PageElement.aasm_states_for_select
+    end
+
+    def partial_enum
+      item && item.respond_to?(:partial_enum) ? item.partial_enum : []
     end
 
     def to_s

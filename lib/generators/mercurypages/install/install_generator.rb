@@ -3,7 +3,7 @@ module Mercurypages
     source_root File.expand_path('../templates', __FILE__)
 
     def generate_models
-      generate 'model', 'page_element name:string list_name:string item_id:integer item_type:string title:string description:string content:text aasm_state:string priority:integer valid_from:datetime valid_until:datetime'
+      generate 'model', 'page_element name:string list_name:string item_id:integer item_type:string title:string description:string content:text aasm_state:string priority:integer valid_from:datetime valid_until:datetime partial:string'
       inject_into_file 'app/models/page_element.rb', :before => "end" do <<-RUBY
 
   include MercuryPages::ActsAsEditor

@@ -27,10 +27,11 @@ module MercuryPagesHelper
       params = options.delete(:find) || {}
       params[:conditions] = (params[:conditions] || {}).merge(:list_name => name)
       PageElement.find(:all, params).each do |pe|
+        default_partial = pe.partial.blank? ? (options[:default] || 'page_element') : pe.partial
         if p = options[pe.item_type.underscore.pluralize.to_sym]
-          content += render(:partial => p, :object => pe.item) if pe.item
+          content += render(:partial => p == :inherit ? default_partial : p, :object => pe.item) if pe.item
         else
-          content += render(:partial => e || 'page_element', :object => pe.item || pe)
+          content += render(:partial => default_partial, :object => pe.item || pe)
         end
       end
       content_tag(:span, raw(content), :class => 'editable_list')
