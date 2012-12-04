@@ -8,7 +8,7 @@ module MercuryPages
     module ClassMethods
       def acts_as_editable(options = {})
         attr_accessor :list_name
-        attr_accessible :id, :created_at, :updated_at, :list_name, :item, :page_element_ids
+        attr_accessible :id, :created_at, :updated_at, :list_name, :page_element_ids
         has_many :page_elements, :as => :item
 
         after_create do |i|

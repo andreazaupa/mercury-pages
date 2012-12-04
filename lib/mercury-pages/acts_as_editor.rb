@@ -11,7 +11,7 @@ module MercuryPages
       end
 
       belongs_to :item, :polymorphic => true
-      attr_accessible :item
+      attr_accessible :item, :id, :created_at, :updated_at
 
       scope :by_type, lambda { |t| where(:item_type => t) }
       scope :by_list, lambda { |l| where(:list_name => l) }
@@ -36,6 +36,10 @@ module MercuryPages
 
     def aasm_state_enum
       PageElement.aasm_states_for_select
+    end
+
+    def to_s
+      content
     end
 
     def method_missing(m, *args, &block)

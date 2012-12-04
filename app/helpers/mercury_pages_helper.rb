@@ -3,12 +3,13 @@ module MercuryPagesHelper
     with_editable_object(*args) do |name, field, e, options|
       options[:id] ||= "#{name}#{MercuryPages::EDITABLE_SUFFIX}"
       options[:'data-mercury'] ||= 'full'
-      options[:class] = options[:class].to_s + ' editable_element'
+      options[:class] = options[:class].to_s + ' editable-element' if can_edit?
 
       unless e
         e = PageElement.find_by_name(name) # Find a Page Element unless bound to an AR model object
       end
-      return empty_editable_tag if (e && !e.online?) || (e.nil? && block.nil?)
+      offline = e.respond_to?(:'published?') ? !e.published? : false
+      return empty_editable_tag if offline || (e.nil? && block.nil?)
 
       content = e.nil? ? nil : e.send(field)
       tag_content = (e.nil? || content.blank?) && block ? capture(&block) : raw(content)
@@ -25,9 +26,11 @@ module MercuryPagesHelper
       content = ''
       params = options.delete(:find) || {}
       params[:conditions] = (params[:conditions] || {}).merge(:list_name => name)
-      PageElement.find(:all, params).each do |e|
-        if p = options[e.item_type.underscore.pluralize.to_sym]
-          content += render(:partial => p, :object => e.item) if e.item
+      PageElement.find(:all, params).each do |pe|
+        if p = options[pe.item_type.underscore.pluralize.to_sym]
+          content += render(:partial => p, :object => pe.item) if pe.item
+        else
+          content += render(:partial => e || 'page_element', :object => pe.item || pe)
         end
       end
       content_tag(:span, raw(content), :class => 'editable_list')
