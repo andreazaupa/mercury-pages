@@ -1,7 +1,7 @@
 module MercuryPagesHelper
-  def one_editable_element(*args, &block)
+  def editable_element(*args, &block)
     with_editable_object(*args) do |name, field, e, options|
-      options[:id] ||= name
+      options[:id] ||= "#{name}#{MercuryPages::EDITABLE_SUFFIX}"
       options[:'data-mercury'] ||= 'full'
       options[:class] = options[:class].to_s + ' editable_element'
 
@@ -13,25 +13,24 @@ module MercuryPagesHelper
       content = e.nil? ? nil : e.send(field)
       tag_content = (e.nil? || content.blank?) && block ? capture(&block) : raw(content)
       if options[:'data-mercury'] == 'image'
-        image_tag(content, options)
+        image_tag(tag_content, options)
       else
         content_tag(:span, tag_content, options)
       end
     end
   end
 
-  def many_editable_elements(*args, &block)
+  def editable_list(*args)
     with_editable_object(*args) do |name, field, e, options|
-      e = PageElement.find_or_create_by_name(name)
-      return empty_editable_tag unless e.online?
-
       content = ''
-      PageItem.find(:all, :conditions => {:page_element_id => e}.merge(options)).each do |i|
-        if p = options[i.item_type.underscore.pluralize.to_sym]
-          content += render(:partial => p, :object => i.item)
+      params = options.delete(:find) || {}
+      params[:conditions] = (params[:conditions] || {}).merge(:list_name => name)
+      PageElement.find(:all, params).each do |e|
+        if p = options[e.item_type.underscore.pluralize.to_sym]
+          content += render(:partial => p, :object => e.item) if e.item
         end
       end
-      raw content
+      content_tag(:span, raw(content), :class => 'editable_list')
     end
   end
 
@@ -39,8 +38,8 @@ module MercuryPagesHelper
     link_to(t("mercury_pages.edit"), "/editor" + request.path, id: "mercury-pages-edit-link", class: 'mercury-pages-edit', data: { save_url: mercury_pages_update_path }) if can_edit?
   end
 
-  def admin_tag(*args)
-    link_to(t('mercury_pages.manage'), admin_path(*args), class: 'mercury-pages-manage') if can_edit?
+  def admin_tag(&block)
+    content_tag(:span, class: 'mercury-pages-manage', &block) if can_edit?
   end
 
   def admin_path(*args)
@@ -50,17 +49,20 @@ module MercuryPagesHelper
       end
     else
       with_editable_object(*args) do |name, field, e, options|
-        if e
-          # Bound to an AR model object
-          if defined? RailsAdmin
-            names = e.class.name.split("::").map { |n| n.underscore }
-            # modules = names[0..-2]
-            # class_name = names[-1]
-            rails_admin.edit_path(names.join('~'), e)
-          end
-        else
-          if defined? RailsAdmin
-            rails_admin.edit_path('page_element', PageElement.find_by_name(name))
+        action = options.delete(:action) || 'edit'
+        e ||= PageElement.find_by_name(name)
+        clazz = e ? e.class.name : name.to_s
+        if defined? RailsAdmin
+          names = clazz.split("::").map { |n| n.underscore }
+          # modules = names[0..-2]
+          # class_name = names[-1]
+          full_name = names.join('~')
+          case action
+          when 'new'
+            rails_admin.new_path(full_name, options.merge(clazz => {:list_name => options.delete(:list_name)}))
+          when 'delete' then rails_admin.delete_path(full_name, e, options)
+          else
+            rails_admin.edit_path(full_name, e, options)
           end
         end
       end
@@ -84,7 +86,6 @@ module MercuryPagesHelper
     end
     options[:'data-activerecord-field'] = field if field != 'content'
     name = "#{name}-#{options[:part]}" unless options[:part].blank?
-    name = "#{name}-editable"
     yield name, field, e, options
   end
 

@@ -15,7 +15,8 @@ class MercuryPagesController < ApplicationController
         if ar_class && ar_id
           @element = ar_class.constantize.find(ar_id)
         else
-          @element = PageElement.where(:name => name).first || PageElement.new(:name => name)          
+          element_name = name.chomp(MercuryPages::EDITABLE_SUFFIX)
+          @element = PageElement.where(:name => element_name).first || PageElement.new(:name => element_name)          
         end
         if ar_field
           @element.send("#{ar_field}=", content)
